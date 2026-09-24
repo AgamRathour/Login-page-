@@ -1,7 +1,9 @@
 import { useState } from "react";
 
-function Login() {
+function Login({ onCreateAccount }) {
+  const [loginMethod, setLoginMethod] = useState("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -11,9 +13,13 @@ function Login() {
   function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = {};
-    if (!email.trim()) nextErrors.email = "Enter your email address.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      nextErrors.email = "That email address looks incomplete.";
+    if (loginMethod === "email") {
+      if (!email.trim()) nextErrors.identifier = "Enter your email address.";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        nextErrors.identifier = "That email address looks incomplete.";
+    } else if (!phone.trim()) {
+      nextErrors.identifier = "Enter your phone number.";
+    }
     if (!password) nextErrors.password = "Enter your password.";
     setErrors(nextErrors);
     setMessage(
@@ -25,7 +31,15 @@ function Login() {
 
   function handleEmailChange(event) {
     setEmail(event.target.value);
-    if (errors.email) setErrors((current) => ({ ...current, email: "" }));
+    if (errors.identifier)
+      setErrors((current) => ({ ...current, identifier: "" }));
+    setMessage("");
+  }
+
+  function handlePhoneChange(event) {
+    setPhone(event.target.value);
+    if (errors.identifier)
+      setErrors((current) => ({ ...current, identifier: "" }));
     setMessage("");
   }
 
@@ -110,28 +124,50 @@ function Login() {
               <div>
                 <label
                   className="mb-2 block text-sm font-semibold text-slate-700"
-                  htmlFor="email"
+                  htmlFor="identifier"
                 >
-                  Email address
+                  {loginMethod === "email" ? "Email address" : "Phone number"}
                 </label>
+                <div className="mb-3 flex gap-4 text-xs font-bold">
+                  <button
+                    className={loginMethod === "email" ? "text-[#123d3a]" : "text-slate-400 transition hover:text-[#123d3a]"}
+                    type="button"
+                    onClick={() => {
+                      setLoginMethod("email");
+                      setErrors((current) => ({ ...current, identifier: "" }));
+                    }}
+                  >
+                    Email
+                  </button>
+                  <button
+                    className={loginMethod === "phone" ? "text-[#123d3a]" : "text-slate-400 transition hover:text-[#123d3a]"}
+                    type="button"
+                    onClick={() => {
+                      setLoginMethod("phone");
+                      setErrors((current) => ({ ...current, identifier: "" }));
+                    }}
+                  >
+                    Phone number
+                  </button>
+                </div>
                 <input
-                  className={inputClass("email")}
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={handleEmailChange}
-                  aria-invalid={Boolean(errors.email)}
-                  aria-describedby={errors.email ? "email-error" : undefined}
+                  className={inputClass("identifier")}
+                  id="identifier"
+                  name={loginMethod}
+                  type={loginMethod === "email" ? "email" : "tel"}
+                  autoComplete={loginMethod === "email" ? "email" : "tel"}
+                  placeholder={loginMethod === "email" ? "you@company.com" : "+1 555 123 4567"}
+                  value={loginMethod === "email" ? email : phone}
+                  onChange={loginMethod === "email" ? handleEmailChange : handlePhoneChange}
+                  aria-invalid={Boolean(errors.identifier)}
+                  aria-describedby={errors.identifier ? "identifier-error" : undefined}
                 />
-                {errors.email && (
+                {errors.identifier && (
                   <p
                     className="mt-2 text-xs font-medium text-rose-600"
-                    id="email-error"
+                    id="identifier-error"
                   >
-                    {errors.email}
+                    {errors.identifier}
                   </p>
                 )}
               </div>
@@ -220,9 +256,9 @@ function Login() {
               <span className="h-px flex-1 bg-slate-200" /> or continue with{" "}
               <span className="h-px flex-1 bg-slate-200" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div>
               <button
-                className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-semibold transition hover:border-slate-400 hover:shadow-sm"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-semibold transition hover:border-slate-400 hover:shadow-sm"
                 type="button"
                 onClick={() =>
                   setMessage("Google sign-in is ready to connect.")
@@ -230,22 +266,13 @@ function Login() {
               >
                 <b className="text-base">G</b> Google
               </button>
-              <button
-                className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-semibold transition hover:border-slate-400 hover:shadow-sm"
-                type="button"
-                onClick={() => setMessage("Apple sign-in is ready to connect.")}
-              >
-                <b className="text-base">A</b> Apple
-              </button>
             </div>
             <p className="mt-8 text-center text-sm text-slate-500">
               New to Northstar?{" "}
               <button
                 className="font-bold text-[#b0713e] hover:text-[#123d3a]"
                 type="button"
-                onClick={() =>
-                  setMessage("Your workspace is just a few details away.")
-                }
+                onClick={onCreateAccount}
               >
                 Create an account -&gt;
               </button>
